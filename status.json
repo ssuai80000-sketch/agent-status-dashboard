@@ -1,0 +1,12 @@
+{
+  "news_bot": {
+    "status": "대기 중",
+    "last_run": null,
+    "step": "다음 실행 대기"
+  },
+  "task_bot": {
+    "status": "대기 중",
+    "last_run": null,
+    "step": "다음 실행 대기"
+  }
+}

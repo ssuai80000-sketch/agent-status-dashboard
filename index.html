@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>에이전트 상태 대시보드</title>
+<style>
+  :root {
+    --bg: #f5f6f8;
+    --card-bg: #ffffff;
+    --text: #1a1a1a;
+    --muted: #6b7280;
+    --border: #e5e7eb;
+    --idle: #9ca3af;
+    --running: #3b82f6;
+    --done: #22c55e;
+    --error: #ef4444;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #111318;
+      --card-bg: #1b1e26;
+      --text: #f0f1f3;
+      --muted: #9aa0aa;
+      --border: #2a2e38;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 32px;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    padding: 24px;
+  }
+  h1 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+  }
+  .cards {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px 24px;
+    width: 220px;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .stage {
+    position: relative;
+    height: 90px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    margin-bottom: 12px;
+  }
+  .character {
+    font-size: 3rem;
+    line-height: 1;
+  }
+  .card.running .character {
+    animation: bob 0.6s ease-in-out infinite;
+  }
+  .card.idle .character {
+    opacity: 0.6;
+  }
+  @keyframes bob {
+    0%, 100% { transform: translateY(0) rotate(-3deg); }
+    50% { transform: translateY(-10px) rotate(3deg); }
+  }
+  .check {
+    position: absolute;
+    top: -4px;
+    right: 44px;
+    font-size: 1.4rem;
+    background: var(--done);
+    color: white;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+  .card.done .check {
+    display: flex;
+  }
+  .name {
+    font-weight: 600;
+    font-size: 1rem;
+    margin-bottom: 6px;
+  }
+  .badge {
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 999px;
+    margin-bottom: 10px;
+    color: white;
+  }
+  .card.idle .badge { background: var(--idle); }
+  .card.running .badge { background: var(--running); }
+  .card.done .badge { background: var(--done); }
+  .card.error .badge { background: var(--error); }
+  .step {
+    font-size: 0.85rem;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .last-run {
+    font-size: 0.72rem;
+    color: var(--muted);
+  }
+  footer {
+    font-size: 0.72rem;
+    color: var(--muted);
+  }
+</style>
+</head>
+<body>
+  <h1>🤖 에이전트 상태 대시보드</h1>
+  <div class="cards">
+    <div class="card idle" id="card-news_bot">
+      <div class="stage">
+        <span class="check">✓</span>
+        <span class="character">📰</span>
+      </div>
+      <div class="name">SBS 뉴스봇</div>
+      <span class="badge">대기 중</span>
+      <div class="step">-</div>
+      <div class="last-run">-</div>
+    </div>
+    <div class="card idle" id="card-task_bot">
+      <div class="stage">
+        <span class="check">✓</span>
+        <span class="character">📝</span>
+      </div>
+      <div class="name">업무 브리핑봇</div>
+      <span class="badge">대기 중</span>
+      <div class="step">-</div>
+      <div class="last-run">-</div>
+    </div>
+  </div>
+  <footer id="updated-at">불러오는 중...</footer>
+
+<script>
+  const STATUS_URL = "status.json";
+  const POLL_MS = 15000;
+
+  function classify(status) {
+    if (status === "실행 중") return "running";
+    if (status === "완료") return "done";
+    if (status === "오류") return "error";
+    return "idle";
+  }
+
+  function formatTime(iso) {
+    if (!iso) return "실행 기록 없음";
+    try {
+      const d = new Date(iso);
+      return d.toLocaleString("ko-KR", { hour12: false });
+    } catch {
+      return iso;
+    }
+  }
+
+  function render(data) {
+    for (const key of ["news_bot", "task_bot"]) {
+      const info = data[key];
+      const card = document.getElementById(`card-${key}`);
+      if (!info || !card) continue;
+      const state = classify(info.status);
+      card.className = `card ${state}`;
+      card.querySelector(".badge").textContent = info.status || "대기 중";
+      card.querySelector(".step").textContent = info.step || "-";
+      card.querySelector(".last-run").textContent = "마지막 실행: " + formatTime(info.last_run);
+    }
+    document.getElementById("updated-at").textContent =
+      "마지막 갱신: " + new Date().toLocaleTimeString("ko-KR", { hour12: false });
+  }
+
+  async function poll() {
+    try {
+      const res = await fetch(`${STATUS_URL}?t=${Date.now()}`, { cache: "no-store" });
+      const data = await res.json();
+      render(data);
+    } catch (e) {
+      document.getElementById("updated-at").textContent = "상태를 불러오지 못했습니다";
+    }
+  }
+
+  poll();
+  setInterval(poll, POLL_MS);
+</script>
+</body>
+</html>
