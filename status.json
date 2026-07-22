@@ -1,12 +1,1 @@
-{
-  "news_bot": {
-    "status": "대기 중",
-    "last_run": null,
-    "step": "다음 실행 대기"
-  },
-  "task_bot": {
-    "status": "대기 중",
-    "last_run": null,
-    "step": "다음 실행 대기"
-  }
-}
+{"news_bot":{"status":"실행 중 (diag)","last_run":"2026-07-22T13:56:44+09:00","step":"로컬 gh api 진단 테스트"},"task_bot":{"status":"대기 중","last_run":null,"step":"다음 실행 대기"}}
